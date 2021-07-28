@@ -30,28 +30,31 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentRepository.save(payment);
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> preAuth(Long paymentId) {
         StateMachine<PaymentState, PaymentEvent> sm = build(paymentId);
 
-        sendEvent(paymentId, sm, PaymentEvent.PRE_AUTHORIZE);
-        return null;
+        sendEvent(paymentId, sm, PaymentEvent.PRE_AUTH_APPROVED);
+        return sm;
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> authorizePayment(Long paymentId) {
         StateMachine<PaymentState, PaymentEvent> sm = build(paymentId);
 
         sendEvent(paymentId, sm, PaymentEvent.AUTH_APPROVED);
-        return null;
+        return sm;
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> declineAuth(Long paymentId) {
         StateMachine<PaymentState, PaymentEvent> sm = build(paymentId);
 
         sendEvent(paymentId, sm, PaymentEvent.AUTH_DECLINED);
-        return null;
+        return sm;
     }
 
     private StateMachine<PaymentState, PaymentEvent> build(Long paymentId) {
