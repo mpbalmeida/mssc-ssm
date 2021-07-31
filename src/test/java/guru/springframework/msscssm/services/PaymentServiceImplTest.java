@@ -9,13 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.statemachine.StateMachine;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import static guru.springframework.msscssm.domain.PaymentState.PRE_AUTH;
-import static guru.springframework.msscssm.domain.PaymentState.PRE_AUTH_ERROR;
+import static guru.springframework.msscssm.domain.PaymentState.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -34,7 +32,6 @@ class PaymentServiceImplTest {
         payment = Payment.builder().amount(new BigDecimal("12.99")).build();
     }
 
-    @Transactional
     @Test
     void preAuth() {
 
@@ -43,5 +40,23 @@ class PaymentServiceImplTest {
         StateMachine<PaymentState, PaymentEvent> stateMachine = service.preAuth(savedPayment.getId());
 
         assertTrue(List.of(PRE_AUTH, PRE_AUTH_ERROR).contains(stateMachine.getState().getId()));
+    }
+
+    @Test
+    void auth() {
+
+        Payment savedPayment = service.newPayment(payment);
+
+        StateMachine<PaymentState, PaymentEvent> preAuthSM = service.preAuth(savedPayment.getId());
+
+        if (preAuthSM.getState().getId() == PaymentState.PRE_AUTH) {
+            System.out.println("Payment is Pre Authorized");
+
+            StateMachine<PaymentState, PaymentEvent> authSM = service.authorizePayment(savedPayment.getId());
+
+            assertTrue(List.of(AUTH, AUTH_ERROR).contains(authSM.getState().getId()));
+        } else {
+            System.out.println("Payment failed pre-auth...");
+        }
     }
 }
